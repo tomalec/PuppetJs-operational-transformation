@@ -1,0 +1,213 @@
+<!--
+ Polymer Custom Element representing network channel (incoming/outgoing packages) in Puppet Operational Transformation communication Visualization
+ -->
+<!-- Import Polymer -->
+<link rel="import" href="../../polymer/polymer.html">
+
+<!-- Define your custom element -->
+<polymer-element name="potv-network-channel" attributes="direction transferOnClick">
+<template>
+    <style>
+     :host{
+        display: block;
+        width: 50px;
+     }
+         :host([direction=left],[direction=right]){
+            min-height: 50px;
+         }
+     #network-channel{
+        display: flex;
+        position: relative;
+        height: 100%;
+        width: 100%;
+     }
+     #wireTube{
+        width:100%;
+        height:100%;
+        position:absolute;
+        z-index: -1;
+     }
+     .up #wire,
+     .down #wire{
+        border-left: 3px dashed #daedef;
+        width: 1px; 
+        height:100%; 
+        margin: 0 auto;
+     }
+        .left #wire,
+        .right #wire{
+            border-top: 3px dashed #daedef;
+            height: 1px; 
+            width:100%; 
+            position: relative;
+            top: 50%;
+            -webkit-transform: translateY(-50%);
+            -ms-transform: translateY(-50%);
+            transform: translateY(-50%);
+         }
+     #packets{
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        flex-direction: column-reverse;
+     }
+     .up #packets,
+     .down #packets{
+        flex-direction: column-reverse;
+        width: calc( 100% - 24px );
+        min-height:100%; 
+        margin: 2% 12px;
+     }
+     .up>#packets{
+        flex-direction: column
+     }
+         .left #packets,
+         .right #packets{
+            flex-direction: row;
+            height: calc( 100% - 24px );
+            min-width:100%; 
+            margin: 12px 2%;
+         }
+         .right #packets{
+            flex-direction: row-reverse;
+         }
+
+     a {
+        position: absolute;
+        text-decoration: none;
+        font-size: 24px;
+        font-weight: bold;
+        color: #1e488d;
+
+     }
+     a[disabled] {
+        color: #cadce4;
+        cursor: default;
+     }
+     .down>a{
+        left: 0;
+        bottom: 14px;
+     }
+     .up>a{
+        left: 0;
+        top: 10px;
+     }
+     .left>a{
+        left: 10px;
+        top: -12px;
+     }
+     .right>a{
+        right: 10px;
+        top: -12px;
+     }
+     ::content>*{
+        top:0;
+        align-self: center;
+        /*transition: all {{transitionTime}}s ease-in-out;
+        -moz-transition: all {{transitionTime}}s ease-in-out;
+        -webkit-transition: all {{transitionTime}}s ease-in-out;*/
+        transition: all 0.5s ease-in-out;
+        -moz-transition: all 0.5s ease-in-out;
+        -webkit-transition: all 0.5s ease-in-out;
+        position: relative;
+     }
+    </style>
+    <div id="network-channel" class="{{direction}}">
+        <div id="wireTube">
+            <div id="wire">
+            </div>
+        </div>
+        <div id="packets">
+            <!-- <span class="operation" title="Operation"></span> -->
+            <content></content>
+        </div>
+        <a href="" disabled?="{{disabled}}" on-click="{{transfer}}" class="{{direction}}">{{arrows[direction]}}</a>
+    </div>
+</template>
+
+    <script>
+    (function(){
+        Polymer('potv-network-channel', {
+            /** {Number} transition time in seconds */
+            arrows: {up: '↑', down: '↓', left: '←', right: '→'},
+            direction: "down",
+            transitionTime: 0.5,
+            disabled: true,
+            /**
+             * Transfer Element over the wire.
+             * @param  {Number | Element} [index_or_child=0] index, or child element itself to be transfered
+             * @return {Element}       transfered (detached) element
+             */
+            transfer: function( index_or_child ){
+                var operation;
+                index_or_child = index_or_child || 0;
+                if( typeof index_or_child == "number"){
+                    operation = this.children[ index_or_child ];                    
+                } else if( index_or_child.preventDefault){ // index_or_child is event
+                    index_or_child.preventDefault();
+                    operation = this.children[0];
+                } else {
+                    operation = index_or_child;
+                }
+                if(!operation){ 
+                    return false;
+                }
+                this.$["network-channel"].style.overflow = "hidden";
+                var oryginal_top = operation.style.top;
+                var oryginal_left = operation.style.left;
+                switch(this.direction){
+                    case "up":
+                        operation.style.top = oryginal_top || 0 + "px";
+                        // operation.style.position = "relative";
+                        operation.style.top = (-operation.offsetTop -operation.offsetHeight) + "px";
+                        break;
+                    case "down":
+                        operation.style.top = oryginal_top || 0 + "px";
+                        // operation.style.position = "relative";
+                        operation.style.top = (this.offsetHeight - operation.offsetTop) + "px";
+                        break;
+                    case "left":
+                        operation.style.left = oryginal_left || 0 + "px";
+                        // operation.style.position = "relative";
+                        operation.style.left = (-operation.offsetLeft -operation.offsetWidth) + "px";
+                        break;
+                    case "right":
+                        operation.style.left = oryginal_left || 0 + "px";
+                        // operation.style.position = "relative";
+                        operation.style.left = (this.offsetWidth - operation.offsetLeft) + "px";
+                        break;
+                        break;
+                }
+
+                var channel = this;
+                setTimeout(function(){//remove after transition is done
+                    channel.removeChild(operation);
+                    channel.$["network-channel"].style.overflow = "visible";
+                    // revert to oryginal top,left
+                    operation.style.top = oryginal_top;
+                    operation.style.left = oryginal_left;
+                    // channel.disabled = channel.children.length == 0;
+                    channel.dispatchEvent( new CustomEvent("transferred", {detail:{"package": operation}}) );
+                }, this.transitionTime * 1000);
+                return operation;
+            },
+            // Fires when the element’s initial set of children and siblings are guaranteed to exist
+            domReady: function() {
+                this.disabled = this.children.length == 0;
+                var channel = this;
+                var observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        channel.disabled = channel.children.length == 0;
+                    });
+                });
+                observer.observe(this, { childList: true });
+            }
+        });
+
+        function triggerTransfer(){
+            
+        }
+}());
+    </script>
+
+</polymer-element>

@@ -1,0 +1,177 @@
+<!--
+ Polymer Custom Element representing operation in Puppet Opperational Transformation communication Visualization
+ -->
+<!-- Import Polymer -->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<!-- Define your custom element -->
+<polymer-element name="potv-operation" attributes="jsonPatch">
+<template>
+    <style>
+     :host{
+        display: block;
+        cursor: pointer;
+        transition: all 0.5s ease-in-out;
+        -moz-transition: all 0.5s ease-in-out;
+        -webkit-transition: all 0.5s ease-in-out;
+        width: 24px;
+        height: 24px;
+        border-radius: 12px;
+        -moz-border-radius: 12px;
+        -webkit-border-radius: 12px;
+        position: relative;
+        margin: 2px;
+
+        text-align: center;
+
+        background-color: #d45e12;
+
+     }
+     :host(.bob){
+        background-color: #ca1171;
+     }
+    /* :host(.test){
+        background-color: rgba(212, 94, 18, 0.3);
+     }
+     :host(.test.bob){
+        background-color: rgba(202, 17, 113, 0.3);
+     }*/
+     :host(.versionBump){
+        background-color: rgba(212, 94, 18, 0.7);
+     }
+     :host(.versionBump.bob){
+        background-color: rgba(202, 17, 113, 0.7);
+     }
+     #versions{
+        color: white;
+        font-size: 9px;
+    }
+    :host(:hover) #popover{
+        display: block;
+    }
+     #popover{
+        display: none;
+        opacity: .85;
+
+        text-align: left;
+
+
+        box-sizing: border-box;
+
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        background-clip: padding-box;
+        max-width: 960px;
+        padding: 1px;
+        background-color: #ffffff;
+        z-index: 1010;
+        width: 540px;
+        margin-left: 12px;
+
+        position: absolute;
+        top: 24px;
+        transform: translateX(-50%);
+     }
+    #popover .arrow{
+        box-sizing: border-box;
+
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-color: transparent;
+        border-style: solid;
+        border-width: 11px;
+        left: 50%;
+        margin-left: -11px;
+        border-top-width: 0;
+        border-bottom-color: rgba(0, 0, 0, 0.25);
+        top: -10px;
+        /*left: 50px;*/
+    }
+    #popover .arrow:after {
+        position: absolute;
+        display: block;
+        width: 0;
+        height: 0;
+        border-color: transparent;
+        border-style: solid;
+
+        border-width: 10px;
+
+        content: " ";
+        top: 1px;
+        margin-left: -10px;
+        border-top-width: 0;
+        border-bottom-color: #ffffff;
+    }
+    h3{
+        margin: 0;
+        padding: 8px 14px;
+        font-size: 14px;
+        font-weight: normal;
+        line-height: 18px;
+        background-color: #f7f7f7;
+        border-bottom: 1px solid #ebebeb;
+        border-radius: 5px 5px 0 0;
+    }
+    table{
+        margin: 3px;
+        width: calc( 100% - 3px );
+    }
+    th{
+        width: 8em;
+    }
+    textarea{
+        padding: 2px;
+        width: calc( 100% - 10px );
+        height: 8em;
+    }
+    </style>
+    <div id="popover">
+        <div class="arrow"></div>
+        <h3 class="popover-title">Operation</h3>
+        <div class="popover-content">
+            <table class="table table-condensed table-noheader">
+            <tbody>
+                <tr><th>Author</th><td>{{author}}</td></tr>
+                <tr><th>Local Version</th><td>{{json.patch[1].value}}</td></tr>
+                <tr><th>Remote Version</th><td>{{json.patch[0].value}}</td></tr>
+                <tr><th>Changeset</th><td><textarea style="width: 100%;">{{json | stringify}}</textarea></td></tr>
+            </tbody>
+            </table>
+    <content></content>
+        </div>
+    </div>
+    <span id="versions">{{json.patch[1].value}}:{{json.patch[0].value}}</span>
+</template>
+
+    <script>
+        Polymer('potv-operation', {
+            json: null,
+            jsonPatch: null,
+            // Fires when an instance of the element is created
+            created: function() {},
+
+            // Fires when the element’s initial set of children and siblings are guaranteed to exist
+            domReady: function() {},
+
+            // Fires when the "<polymer-element>" has been fully prepared
+            ready: function() {},
+
+            // Fires when the element was inserted into the document
+            attached: function() {},
+
+            // Fires when the element was removed from the document
+            detached: function() {},
+
+            // Fires when an attribute was added, removed, or updated
+            attributeChanged: function(attr, oldVal, newVal) {},
+            stringify: function( what ){
+                return JSON.stringify( what );
+
+            }
+        });
+    </script>
+
+</polymer-element>

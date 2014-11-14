@@ -1,0 +1,13 @@
+{
+  "name": "operational-transformation.github.com",
+  "dependencies": {
+    "polymer": "~0.4.2",
+    "juicy-diamond-graph": "Juicy/juicy-diamond-graph#gh-pages",
+    "juicy-jsoneditor": "~0.0.4",
+    "fast-json-patch": "~0.4.0",
+    "potv-network-channel": "tomalec/potv-network-channel#gh-pages",
+    "core-collapse": "Polymer/core-collapse#master",
+    "juicy-markdown": "~0.0.1",
+    "core-ajax": "Polymer/core-ajax#~0.5.1"
+  }
+}

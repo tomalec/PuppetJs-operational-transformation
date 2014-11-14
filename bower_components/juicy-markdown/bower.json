@@ -1,0 +1,24 @@
+{
+  "name": "juicy-markdown",
+  "version": "0.0.1",
+  "homepage": "https://github.com/Juicy/juicy-markdown",
+  "authors": [
+    "andwah <anders.wahlgren@societyobjects.com>",
+    "Tomek Wytrebowicz <tomalecpub@gmail.com>"
+  ],
+  "description": "Markdown viewer",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "index.html",
+    "preview.png"
+  ],
+  "dependencies": {
+    "polymer": "polymer/polymer#~0.3.1",
+    "marked": "~0.3.2",
+    "github-markdown-css": "~0.2.0"
+  }
+}

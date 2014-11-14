@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Why we need PuppetJS versioning and Operational Transformations? - Versions and P-OT explained</title>
+
+
+    <script src="bower_components/platform/platform.js"></script>
+    <link rel="import" href="bower_components/polymer/polymer.html">
+    <link rel="import" href="bower_components/core-ajax/core-ajax.html">
+    <link rel="import" href="bower_components/juicy-markdown/juicy-markdown.html">
+    <style>
+     juicy-markdown {
+     	margin: auto;
+     	width: 80%;
+     	display: block;
+     }
+    </style>
+  </head>
+  <body>
+
+      <!-- <h1>Why do we need PuppetJS versioning and Operational Transformations?</h1> -->
+      <template is="auto-binding">
+      	<core-ajax url="./src/why-puppet-ot.md" response="{{markdown}}" auto></core-ajax>
+      	<juicy-markdown value="{{markdown||''}}" ghcss></juicy-markdown>
+      </template>
+    </div>
+  </body>
+</html>

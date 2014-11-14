@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>&lt;juicy-diamond-graph&gt;</title>
+    <link rel="stylesheet" href="http://juicy.github.io/github-markdown-css/github-markdown.css">
+
+    <!-- Importing Web Component's Polyfill -->
+    <script src="../platform/platform.js"></script>
+
+    <!-- Importing Custom Elements -->
+    <link rel="import" href="src/juicy-diamond-graph.html">
+
+    <style>
+    	juicy-diamond-graph{
+    		float: left;
+    	}
+    </style>
+</head>
+<body class="markdown-body">
+	<h1>&lt;juicy-diamond-graph&gt;</h1>
+	<a href="https://github.com/Juicy/juicy-diamond-graph"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+	<p>
+		Polymer Custom Element to build diamond diagrams, useful to visualize <a href="http://en.wikipedia.org/wiki/Operational_transformation">Operational Transformation</a> flow.
+	</p>
+
+    <!-- Using Custom Elements -->
+    <juicy-diamond-graph></juicy-diamond-graph>
+
+    <!-- brief API demo -->
+    <dl>
+    	<dt><button onclick="goRightClient()">.goRightClient()</button></dt><dd> - new Client version</dd>
+    	<dt><button onclick="goRightServer()">.goRightServer()</button></dt><dd> - server sync with Client</dd>
+    	<dt><button onclick="goLeft()">.goLeft()</button></dt><dd> - new Server version comes to the Client</dd>
+    </dl>
+
+    <script type="text/javascript">
+    function goLeft(){
+    	document.querySelector("juicy-diamond-graph").goLeft();
+    }
+    function goRightServer(){
+    	document.querySelector("juicy-diamond-graph").goRightServer();
+    }
+    function goRightClient(){
+    	document.querySelector("juicy-diamond-graph").goRightClient();
+    }
+    </script>
+</body>
+</html>

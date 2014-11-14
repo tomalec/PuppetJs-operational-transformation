@@ -1,0 +1,263 @@
+<!--
+ Polymer Custom Element representing peer in Puppet Opperational Transformation communication Visualization
+ -->
+<!-- Import Polymer -->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<!-- dependencies-->
+<link rel="import" href="potv-operation.html">
+<link rel="import" href="../bower_components/core-collapse/core-collapse.html">
+
+<!-- Define your custom element -->
+<polymer-element name="potv-peer" attributes="name json localVersion remoteVersion ackLocalVersion localVersionName remoteVersionName">
+<template>
+<style>
+ :host{
+    display: block;
+    min-height: 20px;
+    padding: 19px;
+    margin-bottom: 20px;
+    background-color: #f5f5f5;
+    border: 1px solid #e3e3e3;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+ }
+ h2{
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-weight: 500;
+    color: rgb(255,203,0);
+    font-size: 28px;
+    line-height: 42px;
+    margin: -8px 0 4px;
+ }
+ ::content>*{
+    display: inline-block;
+ }
+ ::content>.potv-processed{
+    transform: scale(0.8);
+    /*float: left;*/
+ }
+ ul{
+    list-style: none;
+    padding-left: 10px;
+ }
+ h4,h5{
+    cursor: pointer;
+    margin-bottom: 2px;
+ }
+ #queue, #history, #pending{
+    display: block;
+    margin-bottom: 20px;
+    border: 1px solid #e3e3e3;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+
+ }
+</style>
+  <h2>{{name}}</h2>
+  <ul>
+    <li>Local version: {{localVersion}}</li>
+    <li title="Supposedly, latest, local version acknowledged by remote">Local version acknowledged by remote: {{ackLocalVersion}}</li>
+    <li>Acknowledged remote version: {{remoteVersion}}</li>
+  </ul>
+  <button disabled on-click="{{sendTest}}">Send test</button>
+  <button on-click="{{bumpVersion}}">Bump version</button>
+  <h4 on-click="{toggleQueue}}" title="List of operations that waits to be applied here.">Queue</h4>
+  <core-collapse id="queue" allowOverflow opened>
+    <content select=".potv-queue"></content>
+  </core-collapse>
+  <h5 on-click="{{togglePending}}" title="List of sent operations in unsure state.">Pending</h5>
+  <core-collapse id="pending" allowOverflow opened>
+        <content select=".potv-pending"></content>
+  </core-collapse>
+  <h5 on-click="{{toggleHistory}}" title="List of operations successfully aplied here.">History</h5>
+  <core-collapse id="history" allowOverflow opened>
+        <content select=".potv-processed"></content>
+  </core-collapse>
+  <content></content>
+
+
+
+</template>
+
+    <script>
+        /**
+         * @TODO: isolate pot-peer for protocol stuff only
+         */
+        Polymer('potv-peer', {
+            name: "",
+            queue: null,
+            // supposedly, latest, local version acknowledged by remote
+            // in other words: zero/starting point in transformation calculation
+            ackLocalVersion: 0,
+            // list of local operations, that were potentially not yet acknowledged by remote
+            nonAckList: [],
+            
+            // Fires when an instance of the element is created
+            created: function() {
+                this.queue = [];
+                this.nonAckList = [];
+            },
+
+            // Fires when the element’s initial set of children and siblings are guaranteed to exist
+            domReady: function() {},
+
+            // Fires when the "<polymer-element>" has been fully prepared
+            ready: function() {},
+
+            // Fires when the element was inserted into the document
+            attached: function() {},
+
+            // Fires when the element was removed from the document
+            detached: function() {},
+
+            // sendTest: function (){
+            //     this.dispatchEvent(new CustomEvent("testsent",{
+            //         detail:{
+            //             operation: new ot.JSONPatchOperation([], this.localVersion, this.remoteVersion, this.localVersionName, this.remoteVersionName)
+            //         }
+            //     }) );
+            // },
+            bumpVersion: function (){
+                this.localVersion++;
+                this.dispatchEvent(new CustomEvent("versionbumped",{
+                    detail:{
+                        operation: new ot.JSONPatchOperation([], this.localVersion, this.remoteVersion, this.localVersionName, this.remoteVersionName)
+                    }
+                }) );
+            },
+
+            // Fires when an attribute was added, removed, or updated
+            attributeChanged: function(attr, oldVal, newVal) {},
+
+//             jsonChanged: function(event){
+//               var ops = event.detail.action;
+//               var operationElement = document.createElement("potv-operation");
+//               operationElement.classList.add("bob")
+//               operationElement.setAttribute("author","bob");
+//               this.$.bob.localVersion++;
+// // debugger
+//               operationElement.operation = new ot.JSONPatchOperation([ops], this.$.bob.localVersion, this.$.bob.remoteVersion,"_ServerVersion", "_ClientVersion$");
+//               this.$.response.appendChild( operationElement );
+
+//               this.$.bobDiagram.goRightClient();
+//               // debugger
+//             },
+            recieve: function(operationElement, diagram){
+// debugger
+                var operation = operationElement.operation;
+                var transformedOperation = null;
+
+                // new remote version - last acknowledged remote version
+                var versionDistance = operation.localRevision - this.remoteVersion;
+                if( versionDistance <= 0){
+                    throw("This version was already applied");
+                }
+                // else if( versionDistance == 0){ // this should be send only for version tests (tomalec: ???: if we even need those)
+                //     if(operation.ops.length){
+                //         throw("This version was already applied");
+                //     }
+                //     // this is just a test
+                //     // TODO: bump ackLocalVersion
+                //     // Visualization stuff
+                //         operationElement.classList.add("potv-processed")
+                // }
+                else if( versionDistance == 1){ // version is fine, apply patch, update version, and check queue
+                    // computing
+
+                    // Latest local version acknowledged by remote
+                    this.ackLocalVersion = operation.remoteRevision;
+                    //clear pending operations
+                    this.removePendingOperationsWithLocalVersionLowerThan(this.ackLocalVersion);
+                    if(this.nonAckList.length){// is there any pending local operation?
+                        // => Remote sent us something based on outdated versionDistance
+                        console.info("Transformation needed", operation, 'by', this.nonAckList);
+                        var transformedOperation = operation.transform(
+                                this.nonAckList.map(function(el){return el.operation;})// fetch JSONPatchOperations out of <potv-operation>s
+                            );
+
+                    }
+                    this.remoteVersion = operation.localRevision;
+                    try{
+                        jsonpatch.apply(this.json, (transformedOperation || operation).ops);
+                    }catch (ex){
+                        alert("jsonpatch.apply error:" + ex);
+                    }
+                    
+                    //Visualization stuff
+                        // move ball out of queue
+                        operationElement.classList.remove("potv-queue");
+                        operationElement.classList.add("potv-processed");
+                        // draw remote edge
+                        var serverEdgeLength = operation.remoteRevision - diagram.serverStatePoint.rightEdges;
+                        serverEdgeLength > 0 && diagram.goRightServer({length: serverEdgeLength});
+                        // draw local edge
+                        diagram.goLeft();
+
+                    // process next in queue if any
+                    var nextInQueue = this.queue.shift();
+                    nextInQueue && this.recieve(nextInQueue, diagram);
+                } else { // add operation to queue
+                    // computing
+                    this.queue[ versionDistance -2 ]=(operationElement);
+                    //Visualization stuff
+                        console.log(this.queue);
+                        operationElement.classList.add("potv-queue");
+                }
+                //Visualization stuff
+                    if( transformedOperation ){
+                        var transformedOperationElement = document.createElement("potv-operation");
+                        transformedOperationElement.classList.add("transformed", "potv-processed");
+                        transformedOperationElement.setAttribute("author",this.id);
+                        transformedOperationElement.operation = transformedOperation;
+
+                        transformedOperationElement.appendChild(operationElement);
+                        // transformedOperationElement.appendChild( pendingOperations );
+                        // clone also pending operations that were used for transformation
+                        for(var nonAckNumber = 0, nonAckLength = this.nonAckList.length; nonAckNumber < nonAckLength; nonAckNumber++){
+                            var pendingOperation = this.nonAckList[nonAckNumber];
+                            var clonedPendingOperation = pendingOperation.cloneNode(true);
+                            // clonedPendingOperation.operation = JSONPatchOperation.fromJSON( JSON.parse(JSON.stringify(pendingOperation.operation)) );
+                            clonedPendingOperation.operation = ot.JSONPatchOperation.fromJSON( pendingOperation.operation.patch );
+                            transformedOperationElement.appendChild(clonedPendingOperation);
+                        }
+
+
+                        this.appendChild(transformedOperationElement);
+                    }else{
+                        this.appendChild(operationElement);
+                    }
+
+            },
+
+            removePendingOperationsWithLocalVersionLowerThan: function(ackVersion){
+                var arr = this.nonAckList;
+                var len = arr.length;
+                var opNo = 0;
+                while(opNo < len && arr[opNo].operation.localRevision<=ackVersion){
+                    opNo++
+                }
+                if(opNo){
+                    var removedOperations = this.nonAckList.splice(0,opNo);
+                
+                    //Visualization stuff
+                        var removedLen = removedOperations.length;
+                        while(removedLen-- >0){
+                            var opToRemove = removedOperations[removedLen];
+                            opToRemove.parentNode.removeChild(opToRemove);
+                        }
+                }
+            },
+
+            // ui only
+            toggleHistory: function(){
+                this.$.history.toggle();
+            },
+            toggleQueue: function(){
+                this.$.queue.toggle();
+            }
+        });
+    </script>
+
+</polymer-element>

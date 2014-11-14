@@ -1,0 +1,226 @@
+<!-- Import Polymer -->
+<link rel="import" href="../../polymer/polymer.html">
+<!-- Get d3 -->
+<script src="../../d3/d3.js"></script>
+
+<!-- Define your custom element -->
+<polymer-element name="juicy-diamond-graph" attributes="edges">
+    <template>
+    <style>
+    :host{
+        display: inline-block;
+        min-width: 460px;
+        min-height: 320px;
+    }
+    </style>
+    <content></content>
+    </template>
+
+    <script>
+    /**
+     * @TODO: publish constructor and DiamondEdge & -Point (tomalec)
+     */
+    (function(){
+        Polymer('juicy-diamond-graph', {
+            edges: null,
+            serverStatePoint: null,
+            clientStatePoint: null,
+
+
+            // Fires when an instance of the element is created
+            created: function() {
+                this.serverStatePoint = this.clientStatePoint = new DiamondPoint(0, 0);
+                this.edges = [];
+                return;
+            },
+
+            // Fires when the element’s initial set of children and siblings are guaranteed to exist
+            domReady: function() {},
+
+            // Fires when the "<polymer-element>" has been fully prepared
+            ready: function() {},
+
+            // Fires when the element was inserted into the document
+            attached: function() {
+                this.initD3(this.offsetWidth, this.offsetHeight);
+                this.drawEdges();
+            },
+
+            // Fires when the element was removed from the document
+            detached: function() {},
+
+            // Fires when an attribute was added, removed, or updated
+            attributeChanged: function(attr, oldVal, newVal) {},
+
+
+
+            initD3: function(W, H) {
+              var diagram, drag, edgesLayer, px, py, rules, rulesLayer, svg, x, y;
+              px = W / 2;
+              py = 0;
+              svg = this.svg = d3.select(this).append('svg').attr('class', 'diamond-diagram').attr('width', W).attr('height', H);
+              diagram = svg.append('g').attr('transform', 'translate(0, 20)');
+              x = this.x = d3.scale.linear().domain([0, 20]).range([0, W]);
+              y = this.y = d3.scale.linear().domain([0, 16]).range([0, H]);
+              drag = d3.behavior.drag().on('drag', function() {
+                py = Math.min(0, py + d3.event.dy);
+                px += d3.event.dx;
+                rulesLayer.attr('transform', 'translate(0,' + py + ')');
+                return edgesLayer.attr('transform', 'translate(' + px + ',' + py + ')');
+              });
+              svg.call(drag);
+              rulesLayer = diagram.append('g');
+              rules = rulesLayer.selectAll('.rule').data(d3.range(200)).enter().append('g').attr('class', 'rule').attr('transform', function(i) {
+                return "translate(0, " + (y(i)) + ")";
+              });
+              rules.append('line').attr('stroke', '#ddd').attr('y1', '0.5').attr('y2', '0.5').attr('x1', '30').attr('x2', W);
+              rules.append('text').text(String).attr('x', 15).attr('dy', '0.35em').attr('text-anchor', 'middle');
+              return edgesLayer = this.edgesLayer = diagram.append('g').attr('transform', 'translate(' + px + ',' + py + ')');
+            },
+            drawEdges: function() {
+              var _this = this;
+              return this.edgesLayer.selectAll('.diamond-edge').data(this.edges).enter().append('line').attr('class', 'diamond-edge').attr('stroke', function(e) {
+                if (e.direction === LEFT) {
+                  return '#1e488d';
+                } else {
+                  return '#d11';
+                }
+              }).attr('stroke-width', '4px').attr('stroke-linecap', 'round').attr('stroke-dasharray', function(e) {
+                if (e.dashed) {
+                  return '8, 10';
+                } else {
+                  return '1, 0';
+                }
+              }).attr('x1', function(e) {
+                return _this.x(e.startPoint.xPos());
+              }).attr('y1', function(e) {
+                return _this.y(e.startPoint.yPos());
+              }).attr('x2', function(e) {
+                return _this.x(e.endPoint.xPos());
+              }).attr('y2', function(e) {
+                return _this.y(e.endPoint.yPos());
+              });
+            },
+            addEdge: function(edge) {
+              this.edges.push(edge);
+              return this.drawEdges();
+            },
+
+            goRightClient: function(data) {
+              // console.log("goRightClient", this);
+              var edge;
+              edge = this.clientStatePoint.goRight(data || {});
+              this.clientStatePoint = edge.endPoint;
+              return this.addEdge(edge);
+            },
+
+            goRightServer: function(data) {
+              // console.log("goRightServer", this);
+              var edge;
+              edge = this.serverStatePoint.goRight(Polymer.extend(data || {}, {
+                dashed: true
+              }));
+              this.serverStatePoint = edge.endPoint;
+              return this.addEdge(edge);
+            },
+
+            setAwaitingAndBufferEdge: function(awaitingEdge, bufferEdge) {
+              var drawEdge,
+                _this = this;
+              if (this.awaitingEdge) {
+                this.awaitingEdge.remove();
+                delete this.awaitingEdge;
+              }
+              if (this.bufferEdge) {
+                this.bufferEdge.remove();
+                delete this.bufferEdge;
+              }
+              drawEdge = function(edge, color) {
+                return _this.edgesLayer.append('line').attr('stroke', color).attr('stroke-width', '4px').attr('stroke-linecap', 'round').attr('x1', _this.x(edge.startPoint.xPos())).attr('y1', _this.y(edge.startPoint.yPos())).attr('x2', _this.x(edge.endPoint.xPos())).attr('y2', _this.y(edge.endPoint.yPos()));
+              };
+              if (awaitingEdge) {
+                this.awaitingEdge = drawEdge(awaitingEdge, '#ccc');
+              }
+              if (bufferEdge) {
+                return this.bufferEdge = drawEdge(bufferEdge, '#999');
+              }
+            },
+
+            goLeft: function(data) {
+              // console.log("goLeft", this);
+              var clientEdge, edge, serverEdge;
+              data || (data = {});
+              if (this.clientStatePoint.equals(this.serverStatePoint)) {
+                edge = this.clientStatePoint.goLeft(data);
+                this.clientStatePoint = this.serverStatePoint = edge.endPoint;
+                return this.addEdge(edge);
+              } else {
+                serverEdge = this.serverStatePoint.goLeft(data);
+                this.serverStatePoint = serverEdge.endPoint;
+                this.addEdge(serverEdge);
+                clientEdge = this.clientStatePoint.goLeft(Polymer.extend(data, {
+                  dashed: true
+                }));
+                this.clientStatePoint = clientEdge.endPoint;
+                return this.addEdge(clientEdge);
+              }
+            }
+
+        });
+
+        //---- DiamondPoint ----
+        var LEFT = 'left';
+
+        var RIGHT = 'right';
+
+        var DiamondPoint = (function() {
+
+        function DiamondPoint(leftEdges, rightEdges) {
+          this.leftEdges = leftEdges;
+          this.rightEdges = rightEdges;
+        }
+
+        DiamondPoint.prototype.equals = function(o) {
+          return this.leftEdges === o.leftEdges && this.rightEdges === o.rightEdges;
+        };
+
+        DiamondPoint.prototype.xPos = function() {
+          return this.rightEdges - this.leftEdges;
+        };
+
+        DiamondPoint.prototype.yPos = function() {
+          return this.rightEdges + this.leftEdges;
+        };
+
+        DiamondPoint.prototype.goLeft = function(data) {
+          return new DiamondEdge(this, LEFT, data);
+        };
+
+        DiamondPoint.prototype.goRight = function(data) {
+          return new DiamondEdge(this, RIGHT, data);
+        };
+
+        return DiamondPoint;
+
+        })();
+
+        //---- DiamondEdge ----
+        var DiamondEdge = (function() {
+
+        function DiamondEdge(startPoint, direction, data) {
+          this.startPoint = startPoint;
+          this.direction = direction;
+          this.length = 1;
+          if (typeof data === 'object') {
+            Polymer.extend(this, data);
+          }
+          this.endPoint = this.direction === LEFT ? new DiamondPoint(this.startPoint.leftEdges + this.length, this.startPoint.rightEdges) : new DiamondPoint(this.startPoint.leftEdges, this.startPoint.rightEdges + this.length);
+        }
+
+        return DiamondEdge;
+
+        })();
+    }());
+    </script>
+
+</polymer-element>

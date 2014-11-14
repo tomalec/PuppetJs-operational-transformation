@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Visualization of PuppetJs <abbr title="Operational Transformation">OT</abbr> – POT Explained</title>
+    <link rel="stylesheet" href="./css/layout.css" />
+    <link reL="stylesheet" href="./css/visualization.css" />
+    <script src="bower_components/platform/platform.js"></script>
+
+  </head>
+  <body>
+    <div class="container">
+      <h1>Visualization of PuppetJS <abbr title="Operational Transformation">OT</abbr></h1>
+      <p>for async collaboration between browser and server on shared View-Model JSON</p>
+      <p><strong>Please note, that this is still under construction. Currently, no transformation nor queuing is performed.</strong></p>
+      <div class="container" id="wrapper">
+<script src="./bower_components/fast-json-patch/src/json-patch-duplex.js"></script>
+<script src="./js/json-patch-operation.js"></script>
+<link rel="import" href="bower_components/juicy-diamond-graph/src/juicy-diamond-graph.html">
+<link rel="import" href="bower_components/juicy-jsoneditor/src/juicy-jsoneditor.html">
+<link rel="stylesheet" type="text/css" href="bower_components/jsoneditor/jsoneditor.min.css">
+<link rel="import" href="bower_components/potv-network-channel/src/potv-network-channel.html">
+<link rel="import" href="elements/pot-visualization.html">
+<link rel="import" href="elements/potv-operation.html">
+<pot-visualization json='{
+  "Current": {
+    "QuestionNo": 1,
+    "QuestionText": "What is the capital of Sweden",
+    "Answers": [
+      {"AnswerText": "Stockholm", "Choose$": null},
+      {"AnswerText": "Berlin", "Choose$": null},
+      {"AnswerText": "Amsterdam", "Choose$": null},
+      {"AnswerText": "Madrid", "Choose$": null}
+    ]
+  },
+  "Message": null,
+  "Smth": ""
+}'></pot-visualization>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "name": "fast-json-patch",
+  "version": "0.4.1",
+  "homepage": "https://github.com/Starcounter-Jack/JSON-Patch",
+  "description": "JSON-Patch allows you to update a JSON document by sending the changes rather than the whole document.",
+  "main": "src/json-patch.js",
+  "keywords": [
+    "json",
+    "patch",
+    "http",
+    "rest"
+  ],
+  "license": "MIT",
+  "ignore": [
+    ".npmignore",
+    ".gitignore",
+    "test",
+    "gruntfile.js",
+    "node_modules",
+    "package.json"
+  ],
+  "_release": "0.4.1",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.4.1",
+    "commit": "4dc7fb9f14b7d58640d591179c2f58c8d7a3df71"
+  },
+  "_source": "git://github.com/Starcounter-Jack/JSON-Patch.git",
+  "_target": "~0.4.0",
+  "_originalSource": "fast-json-patch"
+}

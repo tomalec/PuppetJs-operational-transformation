@@ -1,0 +1,33 @@
+{
+  "name": "juicy-diamond-graph",
+  "description": "Polymer Custom Element to build diamond diagrams, useful to visualize Operational Transformation flow.",
+  "license": "MIT",
+  "main": "src/diamond-graph.html",
+  "keywords": [
+    "polymer",
+    "web-components",
+    "juicy",
+    "graph",
+    "OT"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "preview.png"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.4.0",
+    "d3": "~3.4.12"
+  },
+  "homepage": "https://github.com/Juicy/juicy-diamond-graph",
+  "_release": "7550cbdb53",
+  "_resolution": {
+    "type": "branch",
+    "branch": "gh-pages",
+    "commit": "7550cbdb53075ef807b1d88faf5152c0ebf302ae"
+  },
+  "_source": "git://github.com/Juicy/juicy-diamond-graph.git",
+  "_target": "gh-pages",
+  "_originalSource": "Juicy/juicy-diamond-graph"
+}

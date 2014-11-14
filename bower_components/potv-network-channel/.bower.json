@@ -1,0 +1,33 @@
+{
+  "name": "potv-network-channel",
+  "description": "Polymer Custom Element to visualize networking of packages.",
+  "license": "MIT",
+  "main": "src/potv-network-channel.html",
+  "keywords": [
+    "polymer",
+    "web-components",
+    "juicy"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "preview.png"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^0.4.0"
+  },
+  "authors": [
+    "Tomek Wytrebowicz <tomalecpub@gmail.com>"
+  ],
+  "homepage": "https://github.com/tomalec/potv-network-channel",
+  "_release": "e8b5198905",
+  "_resolution": {
+    "type": "branch",
+    "branch": "gh-pages",
+    "commit": "e8b5198905fc6b844d97257a68004872ce2997a1"
+  },
+  "_source": "git://github.com/tomalec/potv-network-channel.git",
+  "_target": "gh-pages",
+  "_originalSource": "tomalec/potv-network-channel"
+}

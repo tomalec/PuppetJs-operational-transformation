@@ -1,0 +1,230 @@
+<!--
+ Polymer Custom Element representing network channel (incoming/outgoing packages) in Puppet Opperational Transformation communication Visualization
+ -->
+<!-- Import Polymer -->
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="potv-peer.html">
+
+<!-- Define your custom element -->
+<polymer-element name="pot-visualization" attributes="json">
+<template>
+  <style>
+  h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-weight: 500;
+  }
+  .well{
+    min-height: 20px;
+    padding: 19px;
+    margin-bottom: 20px;
+    background-color: #f5f5f5;
+    border: 1px solid #e3e3e3;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+  }
+  #changes h2{
+    font-size: 28px;
+    line-height: 42px;
+    margin: -8px 0 4px;
+  }
+  #alice::shadow h2{ 
+    color: #1e488d;
+  }
+  h2.bob{
+    color: #ca1171;
+  }
+  h2.alice{
+    color: rgb(159, 211, 55);
+  }
+  potv-peer{
+    flex:0 1 25%;
+    z-index:5;
+  }
+  </style>
+  <div id="networking" style="display: flex; flex-direction: row;">
+
+    <potv-peer 
+      id="alice"
+      name="Puppet JS"
+      json="{{jsonForAlice}}"
+      localVersion="0"
+      remoteVersion="0"
+      localVersionName="_ClientVersion$"
+      remoteVersionName="_ServerVersion"      
+      on-versionbumped="{{aliceBumpedVersion}}">
+      <!-- on-testsent="{{aliceSentTest}}" -->
+    </potv-peer>
+    <div id="wires" style="flex: 1 0 auto; position: relative; display: flex; flex-direction: column; justify-content: center; padding: 1em 0;">
+      <potv-network-channel id="request" on-transferred="{{requestRecieved}}" direction="right" style="width: 100%; position: static; flex: 1; height: 4em; margin: 1em 0;"></potv-network-channel>
+      <potv-network-channel id="response" on-transferred="{{responseRecieved}}" direction="left" style="width: 100%; position: static; flex: 1; height: 4em; margin: 1em 0;"></potv-network-channel>
+    </div>
+    <potv-peer 
+      id="bob"
+      name="Puppet SC"
+      json="{{jsonForBob}}"
+      localVersion="0"
+      remoteVersion="0"
+      localVersionName="_ServerVersion"
+      remoteVersionName="_ClientVersion$"
+      on-versionbumped="{{bobBumpedVersion}}">      
+      <!-- on-testsent="{{bobSentTest}}" -->
+    </potv-peer>
+  </div>
+  <div id="changes" style="display: flex; flex-direction: row;">
+    <div style="margin: auto;">
+      <h2 class="alice">Alice, plays with browser</h2>
+      <juicy-jsoneditor json="{{jsonForAlice}}" on-change="{{aliceJsonChanged}}"></juicy-jsoneditor>
+      <juicy-diamond-graph id="aliceDiagram"></juicy-diamond-graph>
+    </div>
+    <div style="margin: auto;">
+      <h2 class="bob">Bob, with server-side view-model</h2>
+      <juicy-jsoneditor json="{{jsonForBob}}" on-change="{{bobJsonChanged}}"></juicy-jsoneditor>
+      <juicy-diamond-graph id="bobDiagram"></juicy-diamond-graph>
+    </div>  
+  </div>
+</template>
+
+    <script>
+        Polymer('pot-visualization', {
+            name: "",
+            json: null,
+            jsonForBob: null,
+            jsonForAlice: null,
+
+
+            // Fires when an instance of the element is created
+            created: function() {
+              this.json = this.getAttribute("json");
+              this.jsonForBob = JSON.parse((this.json));
+              this.jsonForAlice = JSON.parse((this.json));
+              this.json = JSON.parse(this.json);
+
+            },
+
+            // Fires when the element’s initial set of children and siblings are guaranteed to exist
+            domReady: function() {
+              // this.shadowRoot.querySelectorAll("")
+              function transferOperation(event){
+                if(event.target.tagName == "POTV-OPERATION"){
+                  this.transfer(event.target);
+                }
+              }
+              this.$.request.addEventListener("click",transferOperation);
+              this.$.response.addEventListener("click",transferOperation);
+            },
+
+            // Fires when the "<polymer-element>" has been fully prepared
+            ready: function() {},
+
+            // Fires when the element was inserted into the document
+            attached: function() {},
+
+            // Fires when the element was removed from the document
+            detached: function() {},
+
+            // Fires when an attribute was added, removed, or updated
+            attributeChanged: function(attr, oldVal, newVal) {},
+
+            // TODO: move (at least core part) to potv-peer
+            aliceJsonChanged: function(event){
+              var ops = event.detail.action;
+              var operationElement = document.createElement("potv-operation");
+              operationElement.setAttribute("author","alice");
+
+              this.$.alice.localVersion++;
+              operationElement.operation = new ot.JSONPatchOperation([ops], this.$.alice.localVersion, this.$.alice.remoteVersion, "_ClientVersion$","_ServerVersion");
+
+              //TODO: instead of a copy, make it a reflection
+              var pendingOperationElement = document.createElement("potv-operation");
+              pendingOperationElement.operation = operationElement.operation;
+              pendingOperationElement.classList.add("potv-pending");
+              pendingOperationElement.setAttribute("author","alice");
+              this.$.alice.nonAckList.push(pendingOperationElement);
+
+              this.$.alice.appendChild( pendingOperationElement );
+              this.$.request.appendChild( operationElement );
+
+
+              this.$.aliceDiagram.goRightClient();
+              // debugger
+            },
+            bobJsonChanged: function(event){
+              var ops = event.detail.action;
+              var operationElement = document.createElement("potv-operation");
+              operationElement.setAttribute("author","bob");
+              this.$.bob.localVersion++;
+// debugger
+              operationElement.operation = new ot.JSONPatchOperation([ops], this.$.bob.localVersion, this.$.bob.remoteVersion,"_ServerVersion", "_ClientVersion$");
+
+              //TODO: instead of a copy, make it a reflection
+              var pendingOperationElement = document.createElement("potv-operation");
+              pendingOperationElement.operation = operationElement.operation;
+              pendingOperationElement.classList.add("potv-pending");
+              pendingOperationElement.setAttribute("author","bob");
+
+              this.$.bob.nonAckList.push(pendingOperationElement);
+
+              this.$.bob.appendChild( pendingOperationElement );
+
+              this.$.response.appendChild( operationElement );
+
+              this.$.bobDiagram.goRightClient();
+              // debugger
+            },
+            requestRecieved: function(event){
+              this.$.bob.recieve( event.detail.package, this.$.bobDiagram );
+            },
+            responseRecieved: function(event){
+              this.$.alice.recieve( event.detail.package, this.$.aliceDiagram );
+            },
+
+            // bobSentTest: function(event){
+            //   var operation = event.detail.operation;
+            //   var operationElement = document.createElement("potv-operation");
+            //   operationElement.classList.add(test");
+            //   operationElement.setAttribute("author","bob");
+            //   operationElement.operation = operation;
+
+            //   this.$.response.appendChild( operationElement );
+
+            //   this.$.bobDiagram.goRightClient();
+            // },
+
+            // aliceSentTest: function(event){
+            //   var operation = event.detail.operation;
+            //   var operationElement = document.createElement("potv-operation");
+            //   operationElement.classList.add("test");
+            //   operationElement.setAttribute("author","alice");
+            //   operationElement.operation = operation;
+
+            //   this.$.request.appendChild( operationElement );
+
+            //   this.$.aliceDiagram.goRightClient();
+            // },
+            aliceBumpedVersion: function(){
+              var operation = event.detail.operation;
+              var operationElement = document.createElement("potv-operation");
+              operationElement.classList.add("versionBump");
+              operationElement.setAttribute("author","alice");
+              operationElement.operation = operation;
+
+              this.$.request.appendChild( operationElement );
+              this.$.aliceDiagram.goRightClient();
+            },
+            bobBumpedVersion: function(){
+              var operation = event.detail.operation;
+              var operationElement = document.createElement("potv-operation");
+              operationElement.classList.add("versionBump");
+              operationElement.setAttribute("author","bob");
+              operationElement.operation = operation;
+
+              this.$.response.appendChild( operationElement );
+              this.$.bobDiagram.goRightClient();
+            }            
+
+
+        });
+    </script>
+
+</polymer-element>
