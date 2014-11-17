@@ -7,7 +7,7 @@
 [Why do we need PuppetJS versioning and Operational Transformations?](http://tomalec.github.io/PuppetJs-operational-transformation/why-puppet-ot.html)
 
 ## Visualization
-[Why do we need PuppetJS versioning and Operational Transformations?](http://tomalec.github.io/PuppetJs-operational-transformation/why-puppet-ot.html)
+[Visualization](http://tomalec.github.io/PuppetJs-operational-transformation/visualization.html)
 
 ```sh
 $ bower install juicy-diamond-graph --save
