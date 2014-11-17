@@ -74,12 +74,14 @@
   <div id="changes" style="display: flex; flex-direction: row;">
     <div style="margin: auto;">
       <h2 class="alice">Alice, plays with browser</h2>
-      <juicy-jsoneditor json="{{jsonForAlice}}" on-change="{{aliceJsonChanged}}"></juicy-jsoneditor>
+      <label><input type="checkbox" checked="{{aliceAutoUpdate}}"> Update on keystroke</label><button type="submit" on-click="{{sendAlice}}" disabled?="{{aliceAutoUpdate}}" style="float: right;">Send</button>
+      <juicy-jsoneditor json="{{jsonForAlice}}" on-change="{{aliceJsonChanged}}" modes="['text','tree']"></juicy-jsoneditor>
       <juicy-diamond-graph id="aliceDiagram"></juicy-diamond-graph>
     </div>
     <div style="margin: auto;">
       <h2 class="bob">Bob, with server-side view-model</h2>
-      <juicy-jsoneditor json="{{jsonForBob}}" on-change="{{bobJsonChanged}}"></juicy-jsoneditor>
+      <label><input type="checkbox" checked="{{bobAutoUpdate}}"> Update on keystroke</label><button type="submit" on-click="{{sendBob}}" disabled?="{{bobAutoUpdate}}" style="float: right;">Send</button>
+      <juicy-jsoneditor json="{{jsonForBob}}" on-change="{{bobJsonChanged}}" modes="['text','tree']" style="height: 15em;"></juicy-jsoneditor>
       <juicy-diamond-graph id="bobDiagram"></juicy-diamond-graph>
     </div>  
   </div>
@@ -91,13 +93,17 @@
             json: null,
             jsonForBob: null,
             jsonForAlice: null,
-
+            
+            aliceAutoUpdate: true,
+            bobAutoUpdate: true,
 
             // Fires when an instance of the element is created
             created: function() {
               this.json = this.getAttribute("json");
               this.jsonForBob = JSON.parse((this.json));
               this.jsonForAlice = JSON.parse((this.json));
+              this.jsonForBob_ = JSON.parse((this.json));
+              this.jsonForAlice_ = JSON.parse((this.json));
               this.json = JSON.parse(this.json);
 
             },
@@ -127,13 +133,12 @@
             attributeChanged: function(attr, oldVal, newVal) {},
 
             // TODO: move (at least core part) to potv-peer
-            aliceJsonChanged: function(event){
-              var ops = event.detail.action;
+            patchAlice: function(ops){
               var operationElement = document.createElement("potv-operation");
               operationElement.setAttribute("author","alice");
 
               this.$.alice.localVersion++;
-              operationElement.operation = new ot.JSONPatchOperation([ops], this.$.alice.localVersion, this.$.alice.remoteVersion, "_ClientVersion$","_ServerVersion");
+              operationElement.operation = new ot.JSONPatchOperation(ops, this.$.alice.localVersion, this.$.alice.remoteVersion, "_ClientVersion$","_ServerVersion");
 
               //TODO: instead of a copy, make it a reflection
               var pendingOperationElement = document.createElement("potv-operation");
@@ -147,15 +152,23 @@
 
 
               this.$.aliceDiagram.goRightClient();
+              this.jsonForAlice_ = JSON.parse(JSON.stringify( this.jsonForAlice ));
+            },
+            aliceJsonChanged: function(event){
+              if(!this.aliceAutoUpdate){
+                return false;
+              }
+              this.patchAlice( [event.detail.action] );
               // debugger
             },
-            bobJsonChanged: function(event){
-              var ops = event.detail.action;
+            sendAlice: function(){
+              this.patchAlice( jsonpatch.compare(this.jsonForAlice_, this.jsonForAlice) );
+            },
+            patchBob: function(ops){
               var operationElement = document.createElement("potv-operation");
               operationElement.setAttribute("author","bob");
               this.$.bob.localVersion++;
-// debugger
-              operationElement.operation = new ot.JSONPatchOperation([ops], this.$.bob.localVersion, this.$.bob.remoteVersion,"_ServerVersion", "_ClientVersion$");
+              operationElement.operation = new ot.JSONPatchOperation(ops, this.$.bob.localVersion, this.$.bob.remoteVersion,"_ServerVersion", "_ClientVersion$");
 
               //TODO: instead of a copy, make it a reflection
               var pendingOperationElement = document.createElement("potv-operation");
@@ -170,7 +183,16 @@
               this.$.response.appendChild( operationElement );
 
               this.$.bobDiagram.goRightClient();
-              // debugger
+              this.jsonForBob_ = JSON.parse(JSON.stringify( this.jsonForBob ));
+            },
+            bobJsonChanged: function(event){
+              if(!this.bobAutoUpdate){
+                return false;
+              }
+              this.patchBob( [event.detail.action] );
+            },
+            sendBob: function(){
+              this.patchBob( jsonpatch.compare(this.jsonForBob_, this.jsonForBob) );
             },
             requestRecieved: function(event){
               this.$.bob.recieve( event.detail.package, this.$.bobDiagram );
