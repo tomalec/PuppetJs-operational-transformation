@@ -130,8 +130,22 @@
     }
     textarea{
         padding: 2px;
-        width: calc( 100% - 10px );
+        /*width: calc( 100% - 10px );*/
         height: 8em;
+    }
+    #jsonArea{
+        position: relative;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    :host([invalid]) #jsonArea{
+        box-shadow: 0px 0px 7px 0px rgba(219,99,99,1);
+    }
+    #error{
+        color: white;
+        background-color: rgba(219,99,99,0.5);
+        padding: 0 0.5em;
     }
     ::content>potv-operation{
         display: inline-block;
@@ -146,7 +160,14 @@
                 <tr><th>Author</th><td>{{author}}</td></tr>
                 <tr><th>Local Version</th><td>{{operation.patch[1].value}}</td></tr>
                 <tr><th>Remote Version</th><td>{{operation.patch[0].value}}</td></tr>
-                <tr><th>Changeset</th><td><textarea style="width: 100%;">{{operation | stringify}}</textarea></td></tr>
+                <tr><th>Changeset</th><td>
+                    <div id="jsonArea">
+                        <textarea value="{{operation | stringify}}"></textarea>
+                        <template if="{{error}}">
+                            <div id="error">{{error}}</div>
+                        </template>
+                    </div>
+                    </td></tr>
             </tbody>
             </table>
             <content></content>
@@ -176,8 +197,25 @@
 
             // Fires when an attribute was added, removed, or updated
             attributeChanged: function(attr, oldVal, newVal) {},
-            stringify: function( what ){
-                return JSON.stringify( what );
+            stringify: {
+                toDOM: function( what ){
+                    return JSON.stringify( what );
+                },
+                toModel: function( what ){
+                    globme = this;
+                    try{
+                        var newOp = ot.JSONPatchOperation.fromJSON(JSON.parse(what));
+                        this.removeAttribute("invalid","");
+                        this.error = false;
+                        return newOp;
+                    }catch(e){
+                        debugger
+                        this.setAttribute("invalid","");
+                        this.error = e;
+                        return this.operation;
+                    }
+                }
+
 
             },
             block: function(event){
