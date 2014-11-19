@@ -279,6 +279,7 @@ ot.JSONPatchOperation = (function () {
       remove: function(patchOp, oryginal){
         console.log("Transforming ", JSON.stringify(oryginal) ," against `remove` ", patchOp);
         var orgOpsLen = oryginal.length, currentOp = 0, oryginalOp;
+        // remove operation objects
         while (currentOp < orgOpsLen) {
           var oryginalOp = oryginal[currentOp];
 
@@ -286,7 +287,7 @@ ot.JSONPatchOperation = (function () {
           // TODO: `move`, and `copy` (`from`) may not be covered well (tomalec)
           console.log("TODO: `move`, and `copy` (`from`) may not be covered well (tomalec)");
           // node in question was removed
-          if( patchOp.path === oryginalOp.path || oryginalOp.path.indexOf(patchOp.path + "/") == 0 ){
+          if( patchOp.path === oryginalOp.path || oryginalOp.path.indexOf(patchOp.path + "/") === 0 ){
             console.log("Removing ", oryginalOp);
             oryginal.splice(currentOp,1);
             orgOpsLen--;
@@ -294,6 +295,7 @@ ot.JSONPatchOperation = (function () {
           } 
           currentOp++;
         }
+        // shift indexes
         var match = patchOp.path.match(/(.*\/)(\d+)$/); // last element is a number
         if(match){
           console.warn("Bug prone guessing that, as number given in path, this is an array!");
@@ -306,15 +308,39 @@ ot.JSONPatchOperation = (function () {
             oryginalOp = oryginal[currentOp];
             currentOp++;
 
-            if(oryginalOp.path.indexOf(arrayPath) == 0){//item from the same array
+            if(oryginalOp.path.indexOf(arrayPath) === 0){//item from the same array
               oryginalOp.path = replacePathIfHigher(oryginalOp.path, arrayPath, index);
             }
-            if(oryginalOp.from && oryginalOp.from.indexOf(arrayPath) == 0){//item from the same array
+            if(oryginalOp.from && oryginalOp.from.indexOf(arrayPath) === 0){//item from the same array
               oryginalOp.from = replacePathIfHigher(oryginalOp.from, arrayPath, index);
             }
           }
         }
 
+      },
+      replace: function(patchOp, oryginal){
+        console.log("Transforming ", JSON.stringify(oryginal) ," against `replace` ", patchOp);
+        var orgOpsLen = oryginal.length, currentOp = 0, oryginalOp;
+        // remove operation objects withing replaced JSON node
+        while (currentOp < orgOpsLen) {
+          var oryginalOp = oryginal[currentOp];
+
+
+          // TODO: `move`, and `copy` (`from`) may not be covered well (tomalec)
+          console.log("TODO: `move`, and `copy` (`from`) may not be covered well (tomalec)");
+          // node in question was removed
+          // IT:
+          // if( patchOp.path === oryginalOp.path || oryginalOp.path.indexOf(patchOp.path + "/") === 0 ){
+
+          if( oryginalOp.path.indexOf(patchOp.path + "/") === 0 ){
+            console.log("Removing ", oryginalOp);
+            oryginal.splice(currentOp,1);
+            orgOpsLen--;
+            currentOp--;
+          } 
+          currentOp++;
+        }
+        
       }
     };
     function replacePathIfHigher(path, repl, index){
