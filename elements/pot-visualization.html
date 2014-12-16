@@ -75,13 +75,13 @@
     <div style="margin: auto;">
       <h2 class="alice">Alice, plays with browser</h2>
       <label><input type="checkbox" checked="{{aliceAutoUpdate}}"> Update on keystroke</label><button type="submit" on-click="{{sendAlice}}" disabled?="{{aliceAutoUpdate}}" style="float: right;">Send</button>
-      <juicy-jsoneditor json="{{jsonForAlice}}" on-change="{{aliceJsonChanged}}" modes="['text','tree']"></juicy-jsoneditor>
+      <juicy-jsoneditor json="{{jsonForAlice}}" on-change="{{aliceJsonChanged}}"></juicy-jsoneditor>
       <juicy-diamond-graph id="aliceDiagram"></juicy-diamond-graph>
     </div>
     <div style="margin: auto;">
       <h2 class="bob">Bob, with server-side view-model</h2>
       <label><input type="checkbox" checked="{{bobAutoUpdate}}"> Update on keystroke</label><button type="submit" on-click="{{sendBob}}" disabled?="{{bobAutoUpdate}}" style="float: right;">Send</button>
-      <juicy-jsoneditor json="{{jsonForBob}}" on-change="{{bobJsonChanged}}" modes="['text','tree']" style="height: 15em;"></juicy-jsoneditor>
+      <juicy-jsoneditor json="{{jsonForBob}}" on-change="{{bobJsonChanged}}"></juicy-jsoneditor>
       <juicy-diamond-graph id="bobDiagram"></juicy-diamond-graph>
     </div>  
   </div>
