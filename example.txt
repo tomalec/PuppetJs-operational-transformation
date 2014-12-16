@@ -1,0 +1,29 @@
+Definitions:
+operation: "replace" | "copy" | ..
+operationObject: {"op":"replace","path":"/Current/Answers/0/Choose$","value":1}
+seqence (JSON-Patch): [{"op":"replace","path":"/Current/Answers/0/Choose$","value":1},..]
+ > JSON-Patch document 
+    PATCH /my/data HTTP/1.1
+   Host: example.org
+   Content-Length: 326
+   Content-Type: application/json-patch+json
+   If-Match: "abc123"
+
+   [
+     { "op": "test", "path": "/a/b/c", "value": "foo" },
+   ]
+batch of sequences (for example queue)
+
+JSONPatchTransformableOperation: [{"op":"test","path":"/_ServerVersion","value":"0"},{"op":"test","path":"/_ClientVersion$","value":0},{"op":"replace","path":"/_ClientVersion$","value":1},{"op":"replace","path":"/Message","value":1}]
+
+
+
+
+
+CP {"op":"replace","path":"/Current/Answers/1/Choose$","value":1}
+
+SP: {"op":"remove","path":"/Current/Answers/0"}
+
+SP * CP = {"op":"replace","path":"/Current/Answers/0/Choose$","value":1}
+
+SP * CP != CP * SP
