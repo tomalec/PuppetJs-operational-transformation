@@ -1,0 +1,36 @@
+{
+  "name": "json-patch-queue",
+  "homepage": "https://github.com/PuppetJs/JSON-Patch-queue",
+  "description": "Queue for Versioned JSON-Patch - makes sure that your JSON Patches (RFC6902) gets applied in correct order",
+  "authors": [
+    "Tomek Wytrebowicz <tomalecpub@gmail.com>"
+  ],
+  "keywords": [
+    "jsonpatch",
+    "json-patch",
+    "versioned-json-patch",
+    "json",
+    "queue"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "fast-json-patch": "~0.5.0"
+  },
+  "_release": "f17f2792cb",
+  "_resolution": {
+    "type": "branch",
+    "branch": "gh-pages",
+    "commit": "f17f2792cb5745254dd67227b176cbf50935045a"
+  },
+  "_source": "git://github.com/PuppetJs/JSON-Patch-Queue.git",
+  "_target": "gh-pages",
+  "_originalSource": "PuppetJs/JSON-Patch-Queue",
+  "_direct": true
+}
