@@ -47,9 +47,12 @@ Attribute | Options         | Default | Description
 
 Method            | Parameters   | Returns | Description
 ---               | ---          | ---     | ---
-`goRightClient()` | None.        | self    | Move Client to the right - new Client version
-`goRightServer()` | None.        | self    | Move Server to the right - server sync with Client
-`goLeft()`        | None.        | self    | Move to the left - new Server version comes to the Client
+`goRightClient`   | None.        | self    | Move Client to the right - new Client version
+`goRightServer`   | None.        | self    | Move Server to the right - server sync with Client
+`goLeft`          | None.        | self    | Move to the left - new Server version comes to the Client
+`goLeftClient`    | None.        | self    | Move Client to the left
+`goLeftServer`    | None.        | self    | Move Server to the left
+`drawEdge`        | from, direction[, length[, dashed[, stroke]]] | self | Draw given edge
 
 
 ## Contributing

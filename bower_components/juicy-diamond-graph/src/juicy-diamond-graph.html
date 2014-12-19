@@ -4,7 +4,7 @@
 <script src="../../d3/d3.js"></script>
 
 <!-- Define your custom element -->
-<polymer-element name="juicy-diamond-graph" attributes="edges">
+<polymer-element name="juicy-diamond-graph" attributes="edges leftColor rightColor">
     <template>
     <style>
     :host{
@@ -26,6 +26,8 @@
             serverStatePoint: null,
             clientStatePoint: null,
 
+            leftColor: '#1e488d',
+            rightColor: '#d11',
 
             // Fires when an instance of the element is created
             created: function() {
@@ -80,10 +82,12 @@
             drawEdges: function() {
               var _this = this;
               return this.edgesLayer.selectAll('.diamond-edge').data(this.edges).enter().append('line').attr('class', 'diamond-edge').attr('stroke', function(e) {
-                if (e.direction === LEFT) {
-                  return '#1e488d';
+                if (e.stroke) {
+                  return e.stroke;
+                } else if (e.direction === LEFT) {
+                  return _this.leftColor;
                 } else {
-                  return '#d11';
+                  return _this.rightColor;
                 }
               }).attr('stroke-width', '4px').attr('stroke-linecap', 'round').attr('stroke-dasharray', function(e) {
                 if (e.dashed) {
@@ -106,6 +110,21 @@
               return this.drawEdges();
             },
 
+            drawEdge: function(from, direction, length, dashed, stroke){
+              this.edges.push(
+                new DiamondEdge(
+                  new DiamondPoint(parseInt(from[0], 10), parseInt(from[1], 10)),
+                  direction,
+                  {
+                    length: length, 
+                    dashed: dashed,
+                    stroke: stroke
+                  } 
+                )
+              );
+              return this.drawEdges();
+            },
+
             goRightClient: function(data) {
               // console.log("goRightClient", this);
               var edge;
@@ -118,6 +137,24 @@
               // console.log("goRightServer", this);
               var edge;
               edge = this.serverStatePoint.goRight(Polymer.extend(data || {}, {
+                dashed: true
+              }));
+              this.serverStatePoint = edge.endPoint;
+              return this.addEdge(edge);
+            },
+
+            goLeftClient: function(data) {
+              // console.log("goLeftClient", this);
+              var edge;
+              edge = this.clientStatePoint.goLeft(data || {});
+              this.clientStatePoint = edge.endPoint;
+              return this.addEdge(edge);
+            },
+
+            goLeftServer: function(data) {
+              // console.log("goLeftServer", this);
+              var edge;
+              edge = this.serverStatePoint.goLeft(Polymer.extend(data || {}, {
                 dashed: true
               }));
               this.serverStatePoint = edge.endPoint;
