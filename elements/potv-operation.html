@@ -158,8 +158,8 @@
             <table class="table table-condensed table-noheader">
             <tbody>
                 <tr><th>Author</th><td>{{author}}</td></tr>
-                <tr><th>Local Version</th><td>{{operation.patch[1].value}}</td></tr>
-                <tr><th>Remote Version</th><td>{{operation.patch[0].value}}</td></tr>
+                <tr><th>Local Version</th><td>{{operation.patch[0].value}}</td></tr>
+                <tr><th>Remote Version</th><td>{{operation.patch[1].value}}</td></tr>
                 <tr><th>Changeset</th><td>
                     <div id="jsonArea">
                         <textarea value="{{operation | stringify}}"></textarea>
@@ -173,7 +173,7 @@
             <content></content>
         </div>
     </div>
-    <span id="versions">{{operation.patch[1].value}}:{{operation.patch[0].value}}</span>
+    <span id="versions">{{operation.patch[0].value}}:{{operation.patch[1].value}}</span>
 </template>
 
     <script>

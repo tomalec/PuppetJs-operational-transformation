@@ -7,7 +7,7 @@ ot.JSONPatchOperation = (function () {
   'use strict';
 
   // Constructor for new operations.
-  // IDEA: move versions to layer above (tomalec)
+  // TODO: separate VersionedJson Patch out of transforamtions  (tomalec)
   function JSONPatchOperation (ops, localRevision, remoteRevision, localRevPropName, remoteRevPropName) {
     if (!this || this.constructor !== JSONPatchOperation) {
       // => function was called without 'new'
@@ -23,8 +23,8 @@ ot.JSONPatchOperation = (function () {
     this.remoteRevPropName = remoteRevPropName;
 
     this.patch = [
-      {op:"test", path: "/" + remoteRevPropName, value: remoteRevision},
-      {op:"replace", path: "/" + localRevPropName, value: localRevision}
+      {op:"replace", path: localRevPropName, value: localRevision},
+      {op:"test", path: remoteRevPropName, value: remoteRevision}
     ].concat(ops);
 
     // An operation's baseLength is the length of every string the operation
@@ -179,7 +179,7 @@ ot.JSONPatchOperation = (function () {
 
   // Converts a plain JS object into an operation and validates it.
   JSONPatchOperation.fromJSON = function (json) {
-      return new JSONPatchOperation(json.splice(2), json[1].value, json[0].value, json[1].path.substr(1), json[0].path.substr(1))
+      return new JSONPatchOperation(json.splice(2), json[0].value, json[1].value, json[0].path, json[1].path)
   //   debugger;
   //   var o = new JSONPatchOperation();
   //   for (var i = 0, l = ops.length; i < l; i++) {
@@ -234,10 +234,19 @@ ot.JSONPatchOperation = (function () {
   JSONPatchOperation.prototype.transform = function (operations) {
     // var clonedPatch = JSON.parse(JSON.stringify(this.patch)); // clone needed for debugging and visualization
     var clonedPatch = JSON.parse(JSON.stringify(this.ops)); // clone needed for debugging and visualization
-    var result = operations.reduce(composeJSONPatches, clonedPatch); // <=> composeJSONPatches(this, operations.concat() )
+    var result = operations.reduce(composeJSONPatchOps, clonedPatch); // <=> composeJSONPatchOps(this, operations.concat() )
     return new JSONPatchOperation(result, this.localRevision, operations[operations.length-1].localRevision, this.localRevPropName, this.remoteRevPropName);
   }
-  var composeJSONPatches = function( oryginal, patch ){
+  JSONPatchOperation.transform = function (sequenceA, sequences) {
+    // var clonedPatch = JSON.parse(JSON.stringify(this.patch)); // clone needed for debugging and visualization
+    var clonedPatch = JSON.parse(JSON.stringify(sequenceA)); // clone needed for debugging and visualization
+    var result = sequences.reduce(composeJSONPatches, clonedPatch); // <=> composeJSONPatches(this, operations.concat() )
+    return result;
+    // return new JSONPatchOperation(result, this.localRevision, operations[operations.length-1].localRevision, this.localRevPropName, this.remoteRevPropName);
+  }
+  var composeJSONPatchOps = function( original, patch ){
+    // composeJSONPatches(original.ops, patch.ops);
+    // return original;
         var p = 0, pLen = patch.ops.length, patchOp;
         while (p < pLen) {
             patchOp = patch.ops[p];
@@ -252,20 +261,20 @@ ot.JSONPatchOperation = (function () {
                 throw new Error("'from' MUST be defined");
             }
 
-            // apply patch operation to all oryginal ops
+            // apply patch operation to all original ops
             if(transformAgainst[patchOp.op]){ // if we have any function to transformpatchOp.op at all
               if(typeof transformAgainst[patchOp.op] == "function"){ //not perfectly performant but gives easier maintenance and flexibility with transformations
-                transformAgainst[patchOp.op](patchOp, oryginal);
+                transformAgainst[patchOp.op](patchOp, original);
               } else {
-                var orgOpsLen = oryginal.ops.length, currentOp = 0;
+                var orgOpsLen = original.ops.length, currentOp = 0;
                 while (currentOp < orgOpsLen) {
-                  var oryginalOp = oryginal.ops[currentOp];
+                  var originalOp = original.ops[currentOp];
                   currentOp++;
 
-                  if( transformAgainst[patchOp.op][oryginalOp.op] ){
-                    transformAgainst[patchOp.op][oryginalOp.op](patchOp, oryginalOp)
+                  if( transformAgainst[patchOp.op][originalOp.op] ){
+                    transformAgainst[patchOp.op][originalOp.op](patchOp, originalOp)
                   } else{
-                    console.log("No function to transform " + oryginalOp.op + "against" + patchOp.op);
+                    console.log("No function to transform " + originalOp.op + "against" + patchOp.op);
                   }
                 }
               }
@@ -273,23 +282,61 @@ ot.JSONPatchOperation = (function () {
               console.log("No function to transform against " + patchOp.op)
             }
         }
-        return oryginal;
+        return original;
+    };
+  var composeJSONPatches = function( original, sequenceB ){
+        var p = 0, pLen = sequenceB.length, patchOp;
+        while (p < pLen) {
+            patchOp = sequenceB[p];
+            p++;
+
+
+            // basic validation (as in fast-json-patch)
+            if (patchOp.value === undefined && (patchOp.op === "add" || patchOp.op === "replace" || patchOp.op === "test")) {
+                throw new Error("'value' MUST be defined");
+            }
+            if (patchOp.from === undefined && (patchOp.op === "copy" || patchOp.op === "move")) {
+                throw new Error("'from' MUST be defined");
+            }
+
+            // apply patch operation to all original ops
+            if(transformAgainst[patchOp.op]){ // if we have any function to transformpatchOp.op at all
+              if(typeof transformAgainst[patchOp.op] == "function"){ //not perfectly performant but gives easier maintenance and flexibility with transformations
+                transformAgainst[patchOp.op](patchOp, original);
+              } else {
+                var orgOpsLen = original.length, currentOp = 0;
+                while (currentOp < orgOpsLen) {
+                  var originalOp = original[currentOp];
+                  currentOp++;
+
+                  if( transformAgainst[patchOp.op][originalOp.op] ){
+                    transformAgainst[patchOp.op][originalOp.op](patchOp, originalOp)
+                  } else{
+                    console.log("No function to transform " + originalOp.op + "against" + patchOp.op);
+                  }
+                }
+              }
+            } else {
+              console.log("No function to transform against " + patchOp.op)
+            }
+        }
+        return original;
     };
     var transformAgainst = {
-      remove: function(patchOp, oryginal){
-        console.log("Transforming ", JSON.stringify(oryginal) ," against `remove` ", patchOp);
-        var orgOpsLen = oryginal.length, currentOp = 0, oryginalOp;
+      remove: function(patchOp, original){
+        console.log("Transforming ", JSON.stringify(original) ," against `remove` ", patchOp);
+        var orgOpsLen = original.length, currentOp = 0, originalOp;
         // remove operation objects
         while (currentOp < orgOpsLen) {
-          var oryginalOp = oryginal[currentOp];
+          var originalOp = original[currentOp];
 
 
           // TODO: `move`, and `copy` (`from`) may not be covered well (tomalec)
           console.log("TODO: `move`, and `copy` (`from`) may not be covered well (tomalec)");
           // node in question was removed
-          if( patchOp.path === oryginalOp.path || oryginalOp.path.indexOf(patchOp.path + "/") === 0 ){
-            console.log("Removing ", oryginalOp);
-            oryginal.splice(currentOp,1);
+          if( patchOp.path === originalOp.path || originalOp.path.indexOf(patchOp.path + "/") === 0 ){
+            console.log("Removing ", originalOp);
+            original.splice(currentOp,1);
             orgOpsLen--;
             currentOp--;
           } 
@@ -302,39 +349,39 @@ ot.JSONPatchOperation = (function () {
           var arrayPath = match[1];
           var index = parseInt( match[2], 10 );
           console.log("Shifting array indexes")
-          orgOpsLen = oryginal.length;
+          orgOpsLen = original.length;
           currentOp = 0;
           while (currentOp < orgOpsLen) {
-            oryginalOp = oryginal[currentOp];
+            originalOp = original[currentOp];
             currentOp++;
 
-            if(oryginalOp.path.indexOf(arrayPath) === 0){//item from the same array
-              oryginalOp.path = replacePathIfHigher(oryginalOp.path, arrayPath, index);
+            if(originalOp.path.indexOf(arrayPath) === 0){//item from the same array
+              originalOp.path = replacePathIfHigher(originalOp.path, arrayPath, index);
             }
-            if(oryginalOp.from && oryginalOp.from.indexOf(arrayPath) === 0){//item from the same array
-              oryginalOp.from = replacePathIfHigher(oryginalOp.from, arrayPath, index);
+            if(originalOp.from && originalOp.from.indexOf(arrayPath) === 0){//item from the same array
+              originalOp.from = replacePathIfHigher(originalOp.from, arrayPath, index);
             }
           }
         }
 
       },
-      replace: function(patchOp, oryginal){
-        console.log("Transforming ", JSON.stringify(oryginal) ," against `replace` ", patchOp);
-        var orgOpsLen = oryginal.length, currentOp = 0, oryginalOp;
+      replace: function(patchOp, original){
+        console.log("Transforming ", JSON.stringify(original) ," against `replace` ", patchOp);
+        var orgOpsLen = original.length, currentOp = 0, originalOp;
         // remove operation objects withing replaced JSON node
         while (currentOp < orgOpsLen) {
-          var oryginalOp = oryginal[currentOp];
+          var originalOp = original[currentOp];
 
 
           // TODO: `move`, and `copy` (`from`) may not be covered well (tomalec)
           console.log("TODO: `move`, and `copy` (`from`) may not be covered well (tomalec)");
           // node in question was removed
           // IT:
-          // if( patchOp.path === oryginalOp.path || oryginalOp.path.indexOf(patchOp.path + "/") === 0 ){
+          // if( patchOp.path === originalOp.path || originalOp.path.indexOf(patchOp.path + "/") === 0 ){
 
-          if( oryginalOp.path.indexOf(patchOp.path + "/") === 0 ){
-            console.log("Removing ", oryginalOp);
-            oryginal.splice(currentOp,1);
+          if( originalOp.path.indexOf(patchOp.path + "/") === 0 ){
+            console.log("Removing ", originalOp);
+            original.splice(currentOp,1);
             orgOpsLen--;
             currentOp--;
           } 
@@ -562,7 +609,7 @@ ot.JSONPatchOperation = (function () {
   // produces two operations A' and B' (in an array) such that
   // `apply(apply(S, A), B') = apply(apply(S, B), A')`. This function is the
   // heart of OT.
-  JSONPatchOperation.transform = function (operation1, operation2) {
+  JSONPatchOperation.transform____ = function (operation1, operation2) {
     debugger;
     if (operation1.baseLength !== operation2.baseLength) {
       throw new Error("Both operations have to have the same base length");

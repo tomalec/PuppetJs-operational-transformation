@@ -5,10 +5,11 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <!-- dependencies-->
 <link rel="import" href="potv-operation.html">
+<script src="../bower_components/json-patch-queue/src/json-patch-queue.js"></script>
 <link rel="import" href="../bower_components/core-collapse/core-collapse.html">
 
 <!-- Define your custom element -->
-<polymer-element name="potv-peer" attributes="name json localVersion remoteVersion ackLocalVersion localVersionName remoteVersionName">
+<polymer-element name="potv-peer" attributes="name json localVersion remoteVersion ackLocalVersion localVersionPath remoteVersionPath">
 <template>
 <style>
  :host{
@@ -88,6 +89,10 @@
         Polymer('potv-peer', {
             name: "",
             queue: null,
+            opElementsQueue: null,
+            localVersionPath: "/_localVersion",
+            remoteVersionPath: "/_remoteVersion",
+            diagram: null,
             // supposedly, latest, local version acknowledged by remote
             // in other words: zero/starting point in transformation calculation
             ackLocalVersion: 0,
@@ -96,8 +101,10 @@
             
             // Fires when an instance of the element is created
             created: function() {
-                this.queue = [];
+                this.queue = new JSONPatchQueue([this.localVersionPath, this.remoteVersionPath], this.applyPatch.bind(this), false);
+                this.opElementsQueue = [];
                 this.nonAckList = [];
+                // this.potPeer = new pot.Peer();
             },
 
             // Fires when the element’s initial set of children and siblings are guaranteed to exist
@@ -115,7 +122,7 @@
             // sendTest: function (){
             //     this.dispatchEvent(new CustomEvent("testsent",{
             //         detail:{
-            //             operation: new ot.JSONPatchOperation([], this.localVersion, this.remoteVersion, this.localVersionName, this.remoteVersionName)
+            //             operation: new ot.JSONPatchOperation([], this.localVersion, this.remoteVersion, this.localVersionPath, this.remoteVersionPath)
             //         }
             //     }) );
             // },
@@ -123,95 +130,69 @@
                 this.localVersion++;
                 this.dispatchEvent(new CustomEvent("versionbumped",{
                     detail:{
-                        operation: new ot.JSONPatchOperation([], this.localVersion, this.remoteVersion, this.localVersionName, this.remoteVersionName)
+                        operation: new ot.JSONPatchOperation([], this.localVersion, this.remoteVersion, this.localVersionPath, this.remoteVersionPath)
                     }
                 }) );
             },
 
-            // Fires when an attribute was added, removed, or updated
-            attributeChanged: function(attr, oldVal, newVal) {},
+            localVersionPathChanged: function(oldVal, newVal){
+                this.queue.localPath = newVal;
+            },
+            remoteVersionPathChanged: function(oldVal, newVal){
+                this.queue.remotePath = newVal;
+            },
 
-//             jsonChanged: function(event){
-//               var ops = event.detail.action;
-//               var operationElement = document.createElement("potv-operation");
-//               operationElement.classList.add("bob")
-//               operationElement.setAttribute("author","bob");
-//               this.$.bob.localVersion++;
-// // debugger
-//               operationElement.operation = new ot.JSONPatchOperation([ops], this.$.bob.localVersion, this.$.bob.remoteVersion,"_ServerVersion", "_ClientVersion$");
-//               this.$.response.appendChild( operationElement );
+            applyPatch: function(obj, remoteVersionedJsonPatch){
+                console.log("applyPatch", this, arguments);
+                // transforming / applying
+                var consecutivePatch = remoteVersionedJsonPatch.slice(0);
+                // 
+                // shift first operation object as it should contain test for our local version.
+                // ! We assume correct sequence structure, and queuing applied before.
+                var localVersionAckByRemote = consecutivePatch.shift().value;
 
-//               this.$.bobDiagram.goRightClient();
-//               // debugger
-//             },
-            recieve: function(operationElement, diagram){
-// debugger
-                var operation = operationElement.operation;
-                var transformedOperation = null;
+                // Latest local version acknowledged by remote
+                // Thanks to the queue version may only be higher or equal to current.
+                this.ackLocalVersion = localVersionAckByRemote;
+                //clear pending operations
+                this.removePendingOperationsWithLocalVersionLowerThan(this.ackLocalVersion);
+                if(this.nonAckList.length){// is there any pending local operation?
+                    // => Remote sent us something based on outdated versionDistance
+                    console.info("Transformation needed", consecutivePatch, 'by', this.nonAckList);
+                    var transformedOperation = ot.JSONPatchOperation.transform(
+                            consecutivePatch,
+                            this.nonAckList.map(function(el){return el.operation;})// fetch JSONPatchOperations out of <potv-operation>s
+                        );
 
-                // new remote version - last acknowledged remote version
-                var versionDistance = operation.localRevision - this.remoteVersion;
-                if( versionDistance <= 0){
-                    throw("This version was already applied");
                 }
-                // else if( versionDistance == 0){ // this should be send only for version tests (tomalec: ???: if we even need those)
-                //     if(operation.ops.length){
-                //         throw("This version was already applied");
-                //     }
-                //     // this is just a test
-                //     // TODO: bump ackLocalVersion
-                //     // Visualization stuff
-                //         operationElement.classList.add("potv-processed")
-                // }
-                else if( versionDistance == 1){ // version is fine, apply patch, update version, and check queue
-                    // computing
-
-                    // Latest local version acknowledged by remote
-                    this.ackLocalVersion = operation.remoteRevision;
-                    //clear pending operations
-                    this.removePendingOperationsWithLocalVersionLowerThan(this.ackLocalVersion);
-                    if(this.nonAckList.length){// is there any pending local operation?
-                        // => Remote sent us something based on outdated versionDistance
-                        console.info("Transformation needed", operation, 'by', this.nonAckList);
-                        var transformedOperation = operation.transform(
-                                // this.nonAckList.map(function(el){return el.operation;})// fetch JSONPatchOperations out of <potv-operation>s
-                                this.nonAckList.map(function(el){return el.operation;})// fetch JSONPatchOperations out of <potv-operation>s
-                            );
-
-                    }
-                    this.remoteVersion = operation.localRevision;
-                    try{
-                        jsonpatch.apply(this.json, (transformedOperation || operation).ops);
-                    }catch (ex){
-                        alert("jsonpatch.apply error:" + ex);
-                    }
-                    
-                    //Visualization stuff
-                        // move ball out of queue
-                        operationElement.classList.remove("potv-queue");
-                        operationElement.classList.add("potv-processed");
-                        // draw remote edge
-                        var serverEdgeLength = operation.remoteRevision - diagram.serverStatePoint.rightEdges;
-                        serverEdgeLength > 0 && diagram.goRightServer({length: serverEdgeLength});
-                        // draw local edge
-                        diagram.goLeft();
-
-                    // process next in queue if any
-                    var nextInQueue = this.queue.shift();
-                    nextInQueue && this.recieve(nextInQueue, diagram);
-                } else { // add operation to queue
-                    // computing
-                    this.queue[ versionDistance -2 ]=(operationElement);
-                    //Visualization stuff
-                        console.log(this.queue);
-                        operationElement.classList.add("potv-queue");
+                this.remoteVersion = this.queue.remoteVersion;
+                try{
+                    jsonpatch.apply(obj, transformedOperation && transformedOperation.ops || consecutivePatch);
+                }catch (ex){
+                    alert("jsonpatch.apply error:" + ex);
                 }
+                
                 //Visualization stuff
+                    var operationElement = this.opElementsQueue.shift();
+                    // move ball out of queue
+                    operationElement.classList.remove("potv-queue");
+                    operationElement.classList.add("potv-processed");
+                    // draw remote edge
+                    var serverEdgeLength = this.remoteVersion - this.diagram.serverStatePoint.rightEdges;
+                    // serverEdgeLength > 0 && this.diagram.goRightServer({length: serverEdgeLength});
+                    // draw local edge
+                    // this.diagram.goLeft();
+                    // this.diagram.goRightClient();
+
+                    // this.diagram.drawEdge([this.localVersion, this.remoteVersion], 'right', 1);
+
                     if( transformedOperation ){
                         var transformedOperationElement = document.createElement("potv-operation");
                         transformedOperationElement.classList.add("transformed", "potv-processed");
                         transformedOperationElement.setAttribute("author",operationElement.author + "+" + this.id);
-                        transformedOperationElement.operation = transformedOperation;
+
+                        transformedOperationElement.operation = new ot.JSONPatchOperation( 
+                            transformedOperation, this.remoteVersion, this.localVersion, this.remoteVersionPath,this.localVersionPath);
 
                         transformedOperationElement.appendChild(operationElement);
                         // transformedOperationElement.appendChild( pendingOperations );
@@ -226,10 +207,25 @@
 
 
                         this.appendChild(transformedOperationElement);
-                    }else{
-                        this.appendChild(operationElement);
+                    } else {
+                        this.diagram.drawEdge([this.localVersion, this.remoteVersion-1], 'right', 1);
                     }
+   
+            },
 
+            recieve: function(operationElement){
+                var operation = operationElement.operation;
+                var transformedOperation = null;
+                // visuals - replicate queue for DOM elements
+                    operationElement.classList.add("potv-queue");
+                    this.opElementsQueue[operation.localRevision - this.queue.remoteVersion -1] = (operationElement);
+                    // draw queued edges
+                    this.diagram.drawEdge([this.localVersion, operation.localRevision-1], 'right', 1, false, '#ddd');
+                    this.appendChild(operationElement);
+                    
+                this.queue.receive(this.json, operation.patch);
+
+                return this;
             },
 
             removePendingOperationsWithLocalVersionLowerThan: function(ackVersion){
@@ -249,6 +245,31 @@
                             opToRemove.parentNode.removeChild(opToRemove);
                         }
                 }
+            },
+
+            send: function(sequence){
+                var operationElement = document.createElement("potv-operation");
+                operationElement.setAttribute("author",this.id);
+
+                var versionedSequence = this.queue.send(sequence);
+                this.localVersion = this.queue.localVersion;
+                // redundant
+                operationElement.operation = new ot.JSONPatchOperation(sequence, this.localVersion, this.remoteVersion, this.localVersionPath,this.remoteVersionPath);
+
+                //TODO: instead of a copy, make it a reflection
+                var pendingOperationElement = document.createElement("potv-operation");
+                pendingOperationElement.operation = operationElement.operation;
+                pendingOperationElement.classList.add("potv-pending");
+                pendingOperationElement.setAttribute("author",this.id);
+                this.nonAckList.push(pendingOperationElement);
+
+                this.appendChild( pendingOperationElement );
+
+
+                // this.diagram.goLeftClient();
+                this.diagram.drawEdge([this.localVersion-1, this.remoteVersion], 'left', 1);
+                return operationElement;
+
             },
 
             // ui only
