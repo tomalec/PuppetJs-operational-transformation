@@ -187,6 +187,9 @@
                     // this.diagram.drawEdge([this.localVersion, this.remoteVersion], 'right', 1);
 
                     if( transformedOperation ){
+                        this.diagram.drawEdge([localVersionAckByRemote, this.remoteVersion-1], 'right', 1);
+                        this.diagram.drawEdge([this.localVersion, this.remoteVersion-1], 'right', 1, true);
+
                         var transformedOperationElement = document.createElement("potv-operation");
                         transformedOperationElement.classList.add("transformed", "potv-processed");
                         transformedOperationElement.setAttribute("author",operationElement.author + "+" + this.id);
@@ -203,6 +206,7 @@
                             // clonedPendingOperation.operation = JSONPatchOperation.fromJSON( JSON.parse(JSON.stringify(pendingOperation.operation)) );
                             clonedPendingOperation.operation = ot.JSONPatchOperation.fromJSON( pendingOperation.operation.patch );
                             transformedOperationElement.appendChild(clonedPendingOperation);
+                            this.diagram.drawEdge([pendingOperation.operation.localRevision - 1, this.remoteVersion], 'left', 1, true);
                         }
 
 
@@ -220,9 +224,9 @@
                     operationElement.classList.add("potv-queue");
                     this.opElementsQueue[operation.localRevision - this.queue.remoteVersion -1] = (operationElement);
                     // draw queued edges
-                    this.diagram.drawEdge([this.localVersion, operation.localRevision-1], 'right', 1, false, '#ddd');
+                    this.diagram.drawEdge([operation.remoteRevision, operation.localRevision -1], 'right', 1, false, '#ddd');
                     this.appendChild(operationElement);
-                    
+
                 this.queue.receive(this.json, operation.patch);
 
                 return this;
