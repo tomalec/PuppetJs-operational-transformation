@@ -8,6 +8,7 @@
     "potv-network-channel": "tomalec/potv-network-channel#gh-pages",
     "core-collapse": "Polymer/core-collapse#master",
     "juicy-markdown": "~0.0.1",
-    "core-ajax": "Polymer/core-ajax#~0.5.1"
+    "core-ajax": "Polymer/core-ajax#~0.5.1",
+    "json-patch-queue": "PuppetJs/JSON-Patch-Queue#gh-pages"
   }
 }
