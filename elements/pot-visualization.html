@@ -145,7 +145,6 @@
                 return false;
               }
               this.patchAlice( [event.detail.action] );
-              // debugger
             },
             sendAlice: function(){
               this.patchAlice( jsonpatch.compare(this.jsonForAlice_, this.jsonForAlice) );
@@ -171,29 +170,6 @@
               this.$.alice.recieve( event.detail.package );
             },
 
-            // bobSentTest: function(event){
-            //   var operation = event.detail.operation;
-            //   var operationElement = document.createElement("potv-operation");
-            //   operationElement.classList.add(test");
-            //   operationElement.setAttribute("author","bob");
-            //   operationElement.operation = operation;
-
-            //   this.$.response.appendChild( operationElement );
-
-            //   this.$.bobDiagram.goRightClient();
-            // },
-
-            // aliceSentTest: function(event){
-            //   var operation = event.detail.operation;
-            //   var operationElement = document.createElement("potv-operation");
-            //   operationElement.classList.add("test");
-            //   operationElement.setAttribute("author","alice");
-            //   operationElement.operation = operation;
-
-            //   this.$.request.appendChild( operationElement );
-
-            //   this.$.aliceDiagram.goRightClient();
-            // },
             aliceBumpedVersion: function(){
               var operation = event.detail.operation;
               var operationElement = document.createElement("potv-operation");
