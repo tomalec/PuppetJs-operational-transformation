@@ -202,7 +202,6 @@
                     return JSON.stringify( what );
                 },
                 toModel: function( what ){
-                    globme = this;
                     try{
                         var newOp = ot.JSONPatchOperation.fromJSON(JSON.parse(what));
                         this.removeAttribute("invalid","");

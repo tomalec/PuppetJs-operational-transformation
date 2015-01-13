@@ -20,15 +20,14 @@
     "polymer": "Polymer/polymer#~0.4.0",
     "d3": "~3.4.12"
   },
-  "homepage": "https://github.com/juicy/juicy-diamond-graph",
+  "homepage": "https://github.com/Juicy/juicy-diamond-graph",
   "_release": "8f48a77e6d",
   "_resolution": {
     "type": "branch",
     "branch": "gh-pages",
     "commit": "8f48a77e6d8cb49295d65cb30c5698468f165278"
   },
-  "_source": "git://github.com/juicy/juicy-diamond-graph.git",
+  "_source": "git://github.com/Juicy/juicy-diamond-graph.git",
   "_target": "gh-pages",
-  "_originalSource": "juicy/juicy-diamond-graph",
-  "_direct": true
+  "_originalSource": "Juicy/juicy-diamond-graph"
 }

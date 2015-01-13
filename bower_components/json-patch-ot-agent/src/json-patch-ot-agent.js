@@ -44,7 +44,7 @@ JSONPatchOTAgent.prototype.send = function(sequence){
 
 JSONPatchOTAgent.applyOT = function(callback){
 	return function applyOT(obj, remoteVersionedJsonPatch){
-		console.log("applyPatch", this, arguments);
+		// console.log("applyPatch", this, arguments);
         // transforming / applying
         var consecutivePatch = remoteVersionedJsonPatch.slice(0);
 
@@ -61,7 +61,7 @@ JSONPatchOTAgent.applyOT = function(callback){
         this.pending.splice(0,ackDistance);
         if(this.pending.length){// is there any pending local operation?
             // => Remote sent us something based on outdated versionDistance
-            console.info("Transformation needed", consecutivePatch, 'by', this.nonAckList);
+            // console.info("Transformation needed", consecutivePatch, 'by', this.nonAckList);
             consecutivePatch = this.transform(
                     consecutivePatch,
                     this.pending
