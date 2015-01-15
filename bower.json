@@ -10,6 +10,7 @@
     "juicy-markdown": "~0.0.1",
     "core-ajax": "Polymer/core-ajax#~0.5.1",
     "json-patch-queue": "PuppetJs/JSON-Patch-Queue#gh-pages",
-    "json-patch-ot-agent": "PuppetJs/JSON-Patch-OT-Agent#gh-pages"
+    "json-patch-ot-agent": "PuppetJS/JSON-Patch-OT#gh-pages",
+    "json-patch-ot": "PuppetJS/JSON-Patch-OT#gh-pages"
   }
 }

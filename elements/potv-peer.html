@@ -8,6 +8,7 @@
 <script src="../bower_components/json-patch-queue/src/json-patch-queue.js"></script>
 <!-- <script src="../bower_components/json-patch-queue/src/json-patch-queue.js"></script> -->
 <script src="../bower_components/json-patch-ot-agent/src/json-patch-ot-agent.js"></script>
+<script src="../bower_components/json-patch-ot/src/json-patch-ot.js"></script>
 <link rel="import" href="../bower_components/core-collapse/core-collapse.html">
 
 <!-- Define your custom element -->
@@ -103,7 +104,7 @@
             
             // Fires when an instance of the element is created
             created: function() {
-                this.queue = new JSONPatchOTAgent(ot.JSONPatchOperation.transform, [this.localVersionPath, this.remoteVersionPath], this.applyPatch.bind(this), false);
+                this.queue = new JSONPatchOTAgent(JSONPatchOT.transform, [this.localVersionPath, this.remoteVersionPath], this.applyPatch.bind(this), false);
                 this.opElementsQueue = [];
                 this.pendingElements = [];
                 // this.potPeer = new pot.Peer();
@@ -124,7 +125,7 @@
             // sendTest: function (){
             //     this.dispatchEvent(new CustomEvent("testsent",{
             //         detail:{
-            //             operation: new ot.JSONPatchOperation([], this.localVersion, this.remoteVersion, this.localVersionPath, this.remoteVersionPath)
+            //             operation: new VersionedJSONPatch([], this.localVersion, this.remoteVersion, this.localVersionPath, this.remoteVersionPath)
             //         }
             //     }) );
             // },
@@ -132,7 +133,7 @@
                 this.localVersion++;
                 this.dispatchEvent(new CustomEvent("versionbumped",{
                     detail:{
-                        operation: new ot.JSONPatchOperation([], this.localVersion, this.remoteVersion, this.localVersionPath, this.remoteVersionPath)
+                        operation: new VersionedJSONPatch([], this.localVersion, this.remoteVersion, this.localVersionPath, this.remoteVersionPath)
                     }
                 }) );
             },
@@ -173,7 +174,7 @@
                         transformedOperationElement.classList.add("transformed", "potv-processed");
                         transformedOperationElement.setAttribute("author",operationElement.author + "+" + this.id);
 
-                        transformedOperationElement.operation = new ot.JSONPatchOperation( 
+                        transformedOperationElement.operation = new VersionedJSONPatch( 
                             transformedSequence, this.remoteVersion, this.localVersion, this.remoteVersionPath,this.localVersionPath);
 
                         transformedOperationElement.appendChild(operationElement);
@@ -182,7 +183,7 @@
                         for(var nonAckNumber = 0, nonAckLength = this.pendingElements.length; nonAckNumber < nonAckLength; nonAckNumber++){
                             var pendingOperation = this.pendingElements[nonAckNumber];
                             var clonedPendingOperation = pendingOperation.cloneNode(true);
-                            clonedPendingOperation.operation = ot.JSONPatchOperation.fromJSON( JSON.parse(JSON.stringify(pendingOperation.operation.patch)) );
+                            clonedPendingOperation.operation = VersionedJSONPatch.fromJSON( JSON.parse(JSON.stringify(pendingOperation.operation.patch)) );
                             transformedOperationElement.appendChild(clonedPendingOperation);
                             this.diagram.drawEdge([pendingOperation.operation.localRevision - 1, this.remoteVersion], 'left', 1, true);
                         }
@@ -224,7 +225,7 @@
                 var versionedSequence = this.queue.send(sequence);
                 this.localVersion = this.queue.localVersion;
                 // redundant
-                operationElement.operation = new ot.JSONPatchOperation(sequence, this.localVersion, this.remoteVersion, this.localVersionPath,this.remoteVersionPath);
+                operationElement.operation = new VersionedJSONPatch(sequence, this.localVersion, this.remoteVersion, this.localVersionPath,this.remoteVersionPath);
 
                 //TODO: instead of a copy, make it a reflection
                 var pendingOperationElement = document.createElement("potv-operation");
